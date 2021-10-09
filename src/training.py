@@ -1,8 +1,10 @@
 import os
 from src.utils.common import read_config
 from src.utils.data_mgmt import get_data
-from src.utils.model import create_model, save_model
+from src.utils.model import create_model, save_model, save_plots
 import argparse
+import pandas as pd
+import logging
 
 def training(config_path):
     config = read_config(config_path)
@@ -23,15 +25,28 @@ def training(config_path):
     history = model.fit(X_train, y_train, epochs=EPOCHS,
                     validation_data=VALIDATION_SET)
 
+    
+    
     artifacts_dir = config["artifacts"]["artifacts_dir"]
     model_dir = config["artifacts"]["model_dir"]
+    plots_dir = config["artifacts"]["plots_dir"]
     
     model_dir_path = os.path.join(artifacts_dir, model_dir)
     os.makedirs(model_dir_path, exist_ok=True)
-    
     model_name = config["artifacts"]["model_name"]
-
     save_model(model, model_name, model_dir_path)
+   
+    plots_dir_path = os.path.join(artifacts_dir, plots_dir)
+    os.makedirs(plots_dir_path, exist_ok=True)
+    plot_name = config["artifacts"]["plot_name"]
+    save_plots(pd.DataFrame(history.history), plot_name, plots_dir_path)
+
+    logs_dir = config["logs"]["logs_dir"]
+    logging_str = "[%(asctime)s: %(levelname)s: %(module)s] %(message)s"
+    os.makedirs(logs_dir, exist_ok=True)
+    logging.basicConfig(filename=os.path.join("running_logs.log"), level=logging.INFO, format=logging_str, filemode="a")
+
+    
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
